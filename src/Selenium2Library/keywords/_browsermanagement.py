@@ -173,7 +173,15 @@ class _BrowserManagementKeywords(KeywordGroup):
         except AttributeError:
             raise RuntimeError("'%s' is not a valid WebDriver name" % driver_name)
         self._info("Creating an instance of the %s WebDriver" % driver_name)
-        driver = creation_func(**init_kwargs)
+        if driver_name.lower() == "firefox" and "log_file" in init_kwargs:
+            from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
+            log_file = init_kwargs.pop("log_file")
+            if isinstance(log_file, basestring):
+                log_file = open(log_file, "wb")
+            firefox_binary = FirefoxBinary(log_file=log_file)
+            driver = creation_func(firefox_binary=firefox_binary, **init_kwargs)
+        else:
+            driver = creation_func(**init_kwargs)
         self._debug("Created %s WebDriver instance with session id %s" % (driver_name, driver.session_id))
         return self._cache.register(driver, alias)
 
